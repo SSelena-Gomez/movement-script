@@ -1,5 +1,5 @@
 # movement-script
-a pyrthon script who cancelling cs 1.6 movement (only bhop and movement tricks)
+a python script who cancelling cs 1.6 movement (only bhop and movement tricks)
 Features
 Steam Protocol: Only works with the official Steam version of the game.
 
@@ -37,3 +37,13 @@ Req
 pynput
 pygetwindow
 psutil
+
+
+
+More updates will be soon
+Made by love and boring
+If it works for you send me a gift on steam
+## 🌟 Support & Feedback
+If this script helped you get that 90%+ sync, please consider leaving a **+rep** on my profile!
+
+[![Steam Profile](https://img.shields.io/badge/STEAM-PROFILE-blue?style=for-the-badge&logo=steam)]([https://steamcommunity.com/id/valvesucksmydick/]
