@@ -1,44 +1,22 @@
-# movement-script
-a python script who cancelling cs 1.6 movement (only bhop and movement tricks)
-Features
-Steam Protocol: Only works with the official Steam version of the game.
+# Premium Movement Suite - CS 1.6 (V7)
 
-Movement Cancelling: Automatically A and D to make your syncronization better
+An advanced external movement optimizer for Counter-Strike 1.6 that implements **Priority Snap-Tap (SOCD)** logic. This tool is designed to enhance strafe precision by managing simultaneous key presses (A and D) through an external Python-based engine.
 
-Focus Detection: The script only active when the game window is in focus.
+## ✨ Features
+- **Smart SOCD Engine**: Automatically manages conflicting cardinal directions (A/D).
+- **Trigger-Based Activation**: Snap-Tap logic only activates when `SPACE` or `CTRL` is held, allowing for natural movement during normal walking.
+- **Steam Verification**: Built-in security check to ensure compatibility with the official Steam version of the game.
+- **Encrypted Config**: Loads configuration from an encrypted `null.txt` file for integrity.
+- **Zero Console Injection**: Works externally without modifying game files or sending visible console commands.
 
-Chat Protection: Does not interfere with typing in chat or other applications.
+## 🚀 How it Works
+The script uses a high-frequency input listener to monitor keyboard states. When a "Trigger Key" (Space or Ctrl) is active, the engine ensures that if both `A` and `D` are pressed, the **latest** input takes priority by virtually releasing the previous one. This results in perfect strafes and improved Bhop synchronization.
 
-Safe Activation: Only activates if the game process (hl.exe) is detected.
-Prerequisites
-Before running the script, make sure you have Python 3.x installed. You will also need to install the following dependencies:
-
-Bash
-pip install pynput pygetwindow psutil
-How to use
-Launch Steam and start Counter-Strike 1.6.
-
-Run the script:
-
-Bash
-python movement_helper.py
-The console will display: STARE: Jocul nu a fost detectat until you launch the game.
-
-Inside the game, use the following keys:
-
-INSERT: Toggle the script ON/OFF.
-
-DELETE: Safely close the script.
-
-SPACE: Hold Space while performing strafes to activate the helper logic.
-Disclaimer
-This script is for educational purposes. Using automation scripts on protected servers  may carry risks. Use at your own discretion. Im not responsabile for any bans
-Req
-pynput
-pygetwindow
-psutil
-
-
+## 🛠️ Installation
+1. Install [Python 3.x](https://www.python.org/).
+2. Install dependencies:
+   ```bash
+   pip install psutil pygetwindow pynput
 
 More updates will be soon
 Made by love and boring
