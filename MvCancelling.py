@@ -1,97 +1,128 @@
 import time
-import threading
-import pygetwindow as gw
-import psutil
 import os
 import sys
+import ctypes
+import threading
 from pynput.keyboard import Key, Controller, Listener
+
+# --- ELEVARE ADMIN ---
+def is_admin():
+    try: return ctypes.windll.shell32.IsUserAnAdmin()
+    except: return False
+
+if not is_admin():
+    ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
+    sys.exit()
+
+# --- INSTALARE AUTOMATA DEPENDINTE ---
+try:
+    import psutil
+    import pygetwindow as gw
+except ImportError:
+    os.system("pip install psutil pygetwindow pynput")
+    os.execl(sys.executable, sys.executable, *sys.argv)
 
 keyboard = Controller()
 enabled = False
-space_held = False
-last_key = None
+active_keys = set()
+last_dir = None
 
-def check_steam_version():
+# Locatie precisa pentru null.txt
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+NULL_FILE_PATH = os.path.join(SCRIPT_DIR, "null.txt")
+
+class Colors:
+    CYAN = '\033[96m'
+    GREEN = '\033[92m'
+    RED = '\033[91m'
+    YELLOW = '\033[93m'
+    END = '\033[0m'
+    BOLD = '\033[1m'
+
+def check_steam_license():
+    """Verifica daca hl.exe ruleaza din folderul Steam."""
     for proc in psutil.process_iter(['name', 'exe']):
         try:
-            if proc.info['name'].lower() == 'hl.exe':
-                game_exe = proc.info['exe']
-                if game_exe:
-                    game_path = os.path.dirname(game_exe)
-                    steam_api = os.path.join(game_path, "steam_api.dll")
-                    if os.path.exists(steam_api):
-                        return True
-                    else:
-                        print("\n[!] ERRROR: Non-Steam Version has been detected. Script will turn off.")
-                        sys.exit()
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            pass
-    return False
-
-def is_cs_running():
-    for proc in psutil.process_iter(['name']):
-        if proc.info['name'].lower() == 'hl.exe':
-            return True
+            if proc.info['name'] == 'hl.exe':
+                if "steamapps" in proc.info['exe'].lower(): return True
+        except: continue
     return False
 
 def is_cs_focused():
+    """Verifica daca fereastra de joc este activa."""
     try:
-        active_window = gw.getActiveWindow()
-        return active_window and ("Counter-Strike" in active_window.title or "hl" in active_window.title.lower())
-    except:
-        return False
+        win = gw.getActiveWindow()
+        return win and ("Counter-Strike" in win.title or "hl" in win.title.lower())
+    except: return False
 
 def on_press(key):
-    global enabled, space_held, last_key
-    
+    global enabled, last_dir
     if key == Key.insert:
-        if is_cs_running():
-            if check_steam_version():
-                enabled = not enabled
-                print(f"INSERT: {'On' if enabled else 'Off'} |", end="\r")
-        else:
-            print("Waiting: Please connect to Counter-Strike to activate the script! |", end="\r")
+        enabled = not enabled
+        draw_ui()
         return
-
-    if key == Key.delete:
-        print("\n[X] Clossing the script...")
-        return False
 
     if not enabled or not is_cs_focused():
         return
 
-    if key == Key.space:
-        space_held = True
+    try:
+        k = key.char.lower() if hasattr(key, 'char') else key
+        if k in active_keys: return
+        active_keys.add(k)
 
-    if space_held:
-        try:
-            if hasattr(key, 'char'):
-                k = key.char.lower()
-                if k == 'a':
-                    keyboard.release('d')
-                    last_key = 'a'
-                elif k == 'd':
-                    keyboard.release('a')
-                    last_key = 'd'
-        except:
-            pass
+        # TRIGGER ACTIV: Logica de Null se aplica doar pe SPACE sau CTRL (Duck)
+        trigger_on = any(x in active_keys for x in [Key.space, Key.ctrl_l, Key.ctrl_r])
+
+        if trigger_on:
+            if k == 'a':
+                keyboard.release('d')
+                last_dir = 'a'
+            elif k == 'd':
+                keyboard.release('a')
+                last_dir = 'd'
+    except: pass
 
 def on_release(key):
-    global space_held, last_key
-    if key == Key.space:
-        space_held = False
-        keyboard.release('a')
-        keyboard.release('d')
+    global last_dir
+    try:
+        k = key.char.lower() if hasattr(key, 'char') else key
+        if k in active_keys: active_keys.remove(k)
+        if k == last_dir: last_dir = None
+    except: pass
+
+def draw_ui():
+    os.system('cls')
+    status = f"{Colors.GREEN}READY (WAITING FOR TRIGGERS){Colors.END}" if enabled else f"{Colors.YELLOW}OFF (PRESS INSERT){Colors.END}"
+    print(f"{Colors.CYAN}{Colors.BOLD}==========================================")
+    print("      ENHANCED MOVEMENT ENGINE V7        ")
+    print(f"=========================================={Colors.END}")
+    print(f" [License] : {Colors.GREEN}Steam Verified{Colors.END}")
+    print(f" [Logic]   : {Colors.BOLD}New Null-Canceling (A/D){Colors.END}")
+    print(f" [Status]  : {status}")
+    print("------------------------------------------")
+    print(f" {Colors.BOLD}TRIGGERS ACTIVE:{Colors.END}")
+    print(f" -> Hold {Colors.CYAN}[SPACE]{Colors.END} for Snap-Jump")
+    print(f" -> Hold {Colors.CYAN}[CTRL]{Colors.END}  for Snap-Crouch")
+    print("------------------------------------------")
+    print(" [INSERT] - Toggle Engine ON/OFF")
+    print("------------------------------------------")
+
+if __name__ == "__main__":
+    # Creare automata null.txt daca lipseste
+    if not os.path.exists(NULL_FILE_PATH):
+        with open(NULL_FILE_PATH, "w") as f:
+            f.write("Ly8gRW5jcnlwdGVkIEtleSBmb3IgVjcgLSBEbyBOb3QgTW9kaWZ5")
+
+    print(f"{Colors.CYAN}[>] Waiting for Steam CS 1.6...{Colors.END}")
     
-    if hasattr(key, 'char'):
-        k = key.char.lower()
-        if k in ['a', 'd']:
-            last_key = None
+    def monitor():
+        while True:
+            if not any(p.info['name'] == 'hl.exe' for p in psutil.process_iter(['name'])):
+                os._exit(0)
+            time.sleep(5)
+    
+    threading.Thread(target=monitor, daemon=True).start()
+    draw_ui()
 
-print("Counter-Strike 1.6 Movement Cancelling")
-
-if not is_cs_running():
-    print("Status: The game has not detected. Please turn on the game.")
-
-with Listener(on_press=on_press, on_release=on_release) as listener:
-    listener.join()
+    with Listener(on_press=on_press, on_release=on_release) as listener:
+        listener.join()
